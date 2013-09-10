@@ -3,7 +3,7 @@ gitrecon
 
 gitrecon: Mass clone a users repositories
 
-    Making Multiple searches easier.
+    Making Multiple Clones Easier.
 
     Dependencies:
 		Python 2.7+:
