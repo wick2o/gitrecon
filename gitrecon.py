@@ -31,6 +31,12 @@ except ImportError:
 	print 'Missing needed module: easy_install simplejson'
 	halt = True
 	
+try:
+	import sqlite3
+except ImportError:
+	print 'Missing needed module: easy_install sqlite3'
+	halt = True
+	
 if halt == True:
 	sys.exit()
 
@@ -111,9 +117,62 @@ def main():
 		for itm in repos_json:
 			dl_worker(itm)
 			
-	print 'You may request up to %s more users this hour' % (rate_limit)
+	print '%s You may request up to %s more users this hour' % (datetime.datetime.now(), rate_limit)
 
+	print '%s Generating wordlists' % (datetime.datetime.now())
+
+	if args.debug:
+		print '%s [DEBUG] Creating a database in memory' % (datetime.datetime.now())
+		db = sqlite3.connect(":memory:")
+	cur = db.cursor()
+	cur.execute('CREATE TABLE files (id INTEGER PRIMARY KEY, name varchar(255) UNIQUE, count int DEFAULT 1)')
+	cur.execute('CREATE TABLE dirs (id INTEGER PRIMARY KEY, name varchar(255) UNIQUE, count int DEFAULT 1)')
+	
+	if args.debug:
+		print '%s [DEBUG] Populating the database' % (datetime.datetime.now())
+	
+	for r,d,f in os.walk('./%s' % (args.username)):
+		for m_file in f:
+			try:
+				cur.execute("INSERT INTO files ('name') VALUES ('%s')" % (m_file))
+			except sqlite3.IntegrityError, e:
+				cur.execute("UPDATE files SET count = count + 1 WHERE name = '%s'" % (m_file))
+		for m_dir in d:
+			try:
+				cur.execute("INSERT INTO dirs ('name') VALUES ('%s')" % (m_dir))
+			except sqlite3.IntegrityError, e:
+				cur.execute("UPDATE dirs SET count = count + 1 WHERE name = '%s'" % (m_dir))
+	
+	if args.debug:
+		print '%s [DEBUG] Generating the files wordlist' % (datetime.datetime.now())
+	
+	cur.execute("SELECT name FROM files ORDER BY count DESC")
+	res = cur.fetchall()
+	fp = open('./%s-files.txt' % (args.username), 'w')
+	for itm in res:
+		fp.write('%s\n' % (itm[0]))
+	fp.close()
+	
+	if args.debug:
+		print '%s [DEBUG] GEnerating the dirs wordlist' % (datetime.datetime.now())
+	
+	cur.execute("SELECT name FROM dirs ORDER BY count DESC")
+	res = cur.fetchall()
+	fp = open('./%s-dirs.txt' % (args.username), 'w')
+	for itm in res:
+		fp.write('%s\n' % (itm[0]))
+	fp.close()
+	
+	if cur:
+		cur.close()
+		del cur
+	if db:
+		db.close()
+		del db
+				
 if __name__ == '__main__':
 	main()
 
+	
+	
 
