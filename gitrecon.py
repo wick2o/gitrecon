@@ -123,7 +123,8 @@ def main():
 
 	if args.debug:
 		print '%s [DEBUG] Creating a database in memory' % (datetime.datetime.now())
-		db = sqlite3.connect(":memory:")
+	
+	db = sqlite3.connect(":memory:")
 	cur = db.cursor()
 	cur.execute('CREATE TABLE files (id INTEGER PRIMARY KEY, name varchar(255) UNIQUE, count int DEFAULT 1)')
 	cur.execute('CREATE TABLE dirs (id INTEGER PRIMARY KEY, name varchar(255) UNIQUE, count int DEFAULT 1)')
