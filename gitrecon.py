@@ -56,14 +56,21 @@ def logo():
 
 def setup():
     parser = argparse.ArgumentParser()
-    parser.add_argument('-u', '--username', action='store', dest='username',
-                        required=True, help='Github Username')
-    parser.add_argument('-t', '--threads', action='store', dest='threads',
+    parser.add_argument('-u', '--username',
+                        action='store',
+                        dest='username',
+                        required=True,
+                        help='Github Username')
+    parser.add_argument('-t', '--threads',
+                        action='store',
+                        dest='threads',
                         default=0,
                         type=int,
                         help='Enable Threading. Specifiy max # of threads')
-    parser.add_argument('-d', '--debug', action='store_true',
-                        dest='debug', help='Show debug messages')
+    parser.add_argument('-d', '--debug',
+                        action='store_true',
+                        dest='debug',
+                        help='Show debug messages')
     global args
     args = parser.parse_args()
 
@@ -186,5 +193,6 @@ def main():
     if db:
         db.close()
         del db
+
 if __name__ == '__main__':
     main()
