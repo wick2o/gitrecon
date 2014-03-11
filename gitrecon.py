@@ -7,33 +7,31 @@ import datetime
 import threading
 import Queue
 import time
-import signal
-import urllib
 import urllib2
 
 halt = False
 
 try:
     import argparse
-except ImportError:
+except ImportError as e:
     print 'Missing needed module: easy_install argparse'
     halt = True
 
 try:
     import git
-except ImportError:
+except ImportError as e:
     print 'Missing needed module: easy_install gitpython'
     halt = True
 
 try:
     import simplejson as json
-except ImportError:
+except ImportError as e:
     print 'Missing needed module: easy_install simplejson'
     halt = True
 
 try:
     import sqlite3
-except ImportError:
+except ImportError as e:
     print 'Missing needed module: easy_install sqlite3'
     halt = True
 
@@ -66,7 +64,7 @@ def setup():
                         dest='threads',
                         default=0,
                         type=int,
-                        help='Enable Threading. Specifiy max # of threads')
+                        help='Enable Threading. Specify max # of threads')
     parser.add_argument('-d', '--debug',
                         action='store_true',
                         dest='debug',
@@ -76,7 +74,7 @@ def setup():
 
 
 def get_repo_data(user):
-    url = 'https://api.github.com/users/%s/repos' % (user)
+    url = 'https://api.github.com/users/%s/repos' % user
     req = urllib2.Request(url)
     req.add_header('User-Agent', 'Mozilla/5.0 (Windows NT 6.3; \
         WOW64; rv:16.0.1) Gecko/20121011 Firefox/16.0.1')
@@ -94,9 +92,8 @@ def dl_worker(repo):
 
         print '%s Completed %s' % (datetime.datetime.now(), repo['name'])
         del dlw_res
-    except:
-        print '%s There was a problem cloning %s' \
-            (datetime.datetime.now(), repo['name'])
+    except Exception as err:
+        print '%s There was a problem cloning %s %s' % (datetime.datetime.now(), repo['name'], err.message)
 
 
 def main():
@@ -147,21 +144,19 @@ def main():
     if args.debug:
         print '%s [DEBUG] Populating the database' % (datetime.datetime.now())
 
-    for r, d, f in os.walk('./%s' % (args.username)):
+    for r, d, f in os.walk('./%s' % args.username):
         for m_file in f:
             try:
-                cur.execute("INSERT INTO files ('name') VALUES ('%s')" %
-                           (m_file))
-            except sqlite3.IntegrityError, e:
+                cur.execute("INSERT INTO files ('name') VALUES ('%s')" % m_file)
+            except sqlite3.IntegrityError:
                 cur.execute("UPDATE files SET count = count + 1 WHERE \
-                name = '%s'" % (m_file))
+                name = '%s'" % m_file)
         for m_dir in d:
             try:
-                cur.execute("INSERT INTO dirs ('name') VALUES ('%s')" %
-                           (m_dir))
-            except sqlite3.IntegrityError, e:
+                cur.execute("INSERT INTO dirs ('name') VALUES ('%s')" % m_dir)
+            except sqlite3.IntegrityError:
                 cur.execute("UPDATE dirs SET count = count + 1 \
-                           WHERE name = '%s'" % (m_dir))
+                           WHERE name = '%s'" % m_dir)
 
     if args.debug:
         print '%s [DEBUG] Generating the files wordlist' % \
@@ -169,19 +164,19 @@ def main():
 
     cur.execute("SELECT name FROM files ORDER BY count DESC")
     res = cur.fetchall()
-    fp = open('./%s-files.txt' % (args.username), 'w')
+    fp = open('./%s-files.txt' % args.username, 'w')
 
     for itm in res:
         fp.write('%s\n' % (itm[0]))
     fp.close()
 
     if args.debug:
-        print '%s [DEBUG] GEnerating the dirs wordlist' % \
+        print '%s [DEBUG] Generating the dirs wordlist' % \
             (datetime.datetime.now())
 
     cur.execute("SELECT name FROM dirs ORDER BY count DESC")
     res = cur.fetchall()
-    fp = open('./%s-dirs.txt' % (args.username), 'w')
+    fp = open('./%s-dirs.txt' % args.username, 'w')
 
     for itm in res:
         fp.write('%s\n' % (itm[0]))
