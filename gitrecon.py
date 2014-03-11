@@ -81,7 +81,7 @@ def get_repo_data(user):
     page = urllib2.urlopen(req)
     page_content = page.read()
     page.close()
-    return page_content, page.info()['X-RateLimit-Remainingx']
+    return page_content, page.info()['X-RateLimit-Remaining']
 
 
 def dl_worker(repo):
