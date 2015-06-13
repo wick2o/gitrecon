@@ -13,7 +13,7 @@ if sys.version[0] == '3':
     raise Exception('Python3 is not supported')
 
 MYPATH = os.path.abspath(os.path.expanduser(__file__))
-if os.path.islink(MYPATH): MYPATH = os.readlink(MYPATH)
+if os.path.islink(MYPATH):MYPATH = os.readlink(MYPATH)
 MYLIBPATH = os.path.dirname(MYPATH) + "/lib/"
 sys.path.append(os.path.dirname(MYLIBPATH))
 
@@ -25,37 +25,30 @@ colors = Colors.Colors()
 
 halt = False
 
+downloaded_repos = 0
+
 try:
     import argparse
 except ImportError as e:
-    msg = 'Missing needed module: easy_install argparse'
-    print(msg)
-    logger.error(msg)
+    logger.error('Missing needed module: easy_install argparse')
     halt = True
 
 try:
     import git
 except ImportError as e:
-    msg = 'Missing needed module: easy_install gitpython'
-    print(msg)
-    logger.error(msg)
+    logger.error('Missing needed module: easy_install gitpython')
     halt = True
 
 try:
     import simplejson as json
 except ImportError as e:
-    msg = 'Missing needed module: easy_install simplejson'
-    print(msg)
-    logger.error(msg)
+    logger.error('Missing needed module: easy_install simplejson')
     halt = True
 
 try:
     import sqlite3
 except ImportError as e:
-    msg = 'Missing needed module: easy_install sqlite3'
-    msg = 'Missing needed module: easy_install simplejson'
-    print(msg)
-    logger.error(msg)
+    logger.error('Missing needed module: easy_install sqlite3')
     halt = True
 
 if halt:
@@ -63,18 +56,17 @@ if halt:
 
 
 def logo():
-    print "%s       _ _                            " % colors.red
-    print "  __ _(_) |_ _ __ ___  ___ ___  _ __  "
-    print " / _` | | __| '__/ _ \/ __/ _ \| '_ \ "
-    print "| (_| | | |_| | |  __/ (_| (_) | | | |"
-    print " \__, |_|\__|_|  \___|\___\___/|_| |_|"
-    print " |___/                                "
-    print "%s" % colors.reset
-    print "Authors:"
-    print "    Jaime Filson aka WiK <wick2o@gmail.com>"
-    print "    Borja Ruiz <borja@libcrack.so>"
-    print "License: BSD (3-Clause)"
-    print ""
+    print("%s       _ _                            " % (colors.red))
+    print("  __ _(_) |_ _ __ ___  ___ ___  _ __  ")
+    print(" / _` | | __| '__/ _ \/ __/ _ \| '_ \ ")
+    print("| (_| | | |_| | |  __/ (_| (_) | | | |")
+    print(" \__, |_|\__|_|  \___|\___\___/|_| |_|")
+    print(" |___/                                ")
+    print("%s" % colors.reset)
+    print("Authors:")
+    print("    Jaime Filson aka WiK <wick2o@gmail.com>")
+    print("    Borja Ruiz <borja@libcrack.so>")
+    print("License: BSD (3-Clause)\n")
 
 
 def parse_args():
@@ -99,22 +91,15 @@ def get_repo_data(user):
 
 
 def dl_worker(repo):
+    global downloaded_repos
     try:
-        # print '%s Cloning %s' % (datetime.datetime.now(), repo['name'])
-        msg = 'Cloning %s' % repo['name']
-        print msg
-        logger.info(msg)
+        logger.info('Cloning %s' % repo['clone_url'])
         dlw_res = git.Git().clone(repo['clone_url'], repo['full_name'])
-        msg = 'Completed %s' % repo['name']
-        print msg
-        logger.info(msg)
-        # print '%s Completed %s' % (datetime.datetime.now(), repo['name'])
+        downloaded_repos = downloaded_repos + 1
+        logger.info('Completed %s' % repo['name'])
         del dlw_res
     except Exception as err:
-        #print '%s There was a problem cloning %s %s' % (datetime.datetime.now(), repo['name'], err.message)
-        msg = 'There was a problem cloning %s %s' % (repo['name'], err.message)
-        print msg
-        logger.error(msg)
+        logger.error('There was a problem cloning %s %s' % (repo['name'], err.message))
 
 
 def main():
@@ -122,6 +107,7 @@ def main():
     parse_args()
     repos, rate_limit = get_repo_data(args.username)
     repos_json = json.loads(repos)
+    global downloaded_repos
 
     logger.info('Using username %s' % args.username)
     logger.info('Downloading repos from http://www.github.com/%s' % args.username)
@@ -149,18 +135,12 @@ def main():
         for itm in repos_json:
             dl_worker(itm)
 
-    msg = 'You may request up to %s more users this hour' % rate_limit
-    print msg
-    logger.info(msg)
+    logger.info('You may request up to %s more users this hour' % rate_limit)
 
-    msg = 'Generating wordlists'
-    print msg
-    logger.info(msg)
+    logger.info('Generating wordlists')
 
     if args.debug:
-        msg = '[DEBUG] Creating a database in memory'
-        logger.debug(msg)
-        print(msg)
+        logger.debug('Creating a database in memory')
 
     db = sqlite3.connect(":memory:")
     cur = db.cursor()
@@ -170,10 +150,7 @@ def main():
                 varchar(255) UNIQUE, count int DEFAULT 1)')
 
     if args.debug:
-        # print '%s [DEBUG] Populating the database' % (datetime.datetime.now())
-        msg = '[DEBUG] Populating the database'
-        logger.debug(msg)
-        print msg
+        logger.debug('Populating the database')
 
     for r, d, f in os.walk('./%s' % args.username):
         for m_file in f:
@@ -190,37 +167,34 @@ def main():
                            WHERE name = '%s'" % m_dir)
 
     if args.debug:
-        #print '%s [DEBUG] Generating the files wordlist' % \
-        #    (datetime.datetime.now())
-        msg = '[DEBUG] Generating the files wordlist'
-        print msg
-        logger.debug(msg)
+        logger.debug('Generating the files wordlist')
 
     cur.execute("SELECT name FROM files ORDER BY count DESC")
     res = cur.fetchall()
 
     filename = '%s/%s-files.txt' % (args.username,args.username)
-    logger.info('Opening %s' % filename)
+    logger.info('Writing %s' % filename)
     fp = open(filename, 'w')
-    #fp = open('%s/%s-files.txt' % (args.username,args.username), 'w')
 
+    # TODO: fix encoding
     for itm in res:
-        fp.write('%s\n' % (itm[0]))
+        encoded_itm = itm[0].encode('utf8')
+        if isinstance(itm[0],basestring):
+            encoded_itm = itm[0].encode('utf8')
+        else:
+            encoded_itm = unicode(itm[0]).encode('utf8')
+        fp.write('%s\n' % (encoded_itm))
     fp.close()
 
     if args.debug:
-        msg = '[DEBUG] Generating the dirs wordlist'
-        logger.debug(msg)
-        print (msg)
-        #print '%s [DEBUG] Generating the dirs wordlist' % \
-        #    (datetime.datetime.now())
+        logger.debug('Generating the dirs wordlist')
 
     cur.execute("SELECT name FROM dirs ORDER BY count DESC")
     res = cur.fetchall()
 
     filename = '%s/%s-dirs.txt' % (args.username,args.username)
     fp = open(filename, 'w')
-    logger.info('Opening %s' % filename)
+    logger.info('Writing %s' % filename)
 
     for itm in res:
         fp.write('%s\n' % (itm[0]))
@@ -232,6 +206,8 @@ def main():
     if db:
         db.close()
         del db
+
+    logger.info('Cloned %s repos from http://www.github.com/%s' % (downloaded_repos,args.username))
 
 if __name__ == '__main__':
     main()
