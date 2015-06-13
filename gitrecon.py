@@ -23,9 +23,9 @@ from Logger import Logger
 logger = Logger.logger
 colors = Colors.Colors()
 
-halt = False
-
 downloaded_repos = 0
+args = None
+halt = False
 
 try:
     import argparse
@@ -75,7 +75,11 @@ def parse_args():
     parser.add_argument('-t', '--threads', action='store', dest='threads', default=0, type=int, help='Number of threads')
     parser.add_argument('-d', '--debug', action='store_true', dest='debug', help='Show debug messages')
     global args
-    args = parser.parse_args()
+    try:
+        args = parser.parse_args()
+    except SystemExit:
+        os.unlink('gitrecon.log')
+        sys.exit(1)
 
 
 def get_repo_data(user):
@@ -103,11 +107,12 @@ def dl_worker(repo):
 
 
 def main():
+    global downloaded_repos
+    global args
     logo()
     parse_args()
     repos, rate_limit = get_repo_data(args.username)
     repos_json = json.loads(repos)
-    global downloaded_repos
 
     logger.info('Using username %s' % args.username)
     logger.info('Downloading repos from http://www.github.com/%s' % args.username)
@@ -176,7 +181,6 @@ def main():
     logger.info('Writing %s' % filename)
     fp = open(filename, 'w')
 
-    # TODO: fix encoding
     for itm in res:
         encoded_itm = itm[0].encode('utf8')
         if isinstance(itm[0],basestring):
