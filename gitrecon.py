@@ -7,6 +7,7 @@ import datetime
 import threading
 import Queue
 import time
+import traceback
 import urllib2
 
 if sys.version[0] == '3':
@@ -52,7 +53,7 @@ except ImportError as e:
     halt = True
 
 if halt:
-    sys.exit()
+    sys.exit(1)
 
 
 def logo():
@@ -157,19 +158,25 @@ def main():
     if args.debug:
         logger.debug('Populating the database')
 
-    for r, d, f in os.walk('./%s' % args.username):
-        for m_file in f:
-            try:
-                cur.execute("INSERT INTO files ('name') VALUES ('%s')" % m_file)
-            except sqlite3.IntegrityError:
-                cur.execute("UPDATE files SET count = count + 1 WHERE \
-                name = '%s'" % m_file)
-        for m_dir in d:
-            try:
-                cur.execute("INSERT INTO dirs ('name') VALUES ('%s')" % m_dir)
-            except sqlite3.IntegrityError:
-                cur.execute("UPDATE dirs SET count = count + 1 \
-                           WHERE name = '%s'" % m_dir)
+    for root, dirs, files in os.walk('./%s' % args.username):
+        try:
+            for m_file in files:
+                try:
+                    cur.execute("INSERT INTO files ('name') VALUES (?)",
+                            (os.path.join(root, m_file)))
+                except sqlite3.IntegrityError:
+                    cur.execute("UPDATE files SET count = count + 1 WHERE \
+                    name = ?", (os.path.join(root, m_file)))
+            for m_dir in dirs:
+                try:
+                    cur.execute("INSERT INTO dirs ('name') VALUES (?)",
+                            (os.path.join(root, m_dir)))
+                except sqlite3.IntegrityError:
+                    cur.execute("UPDATE dirs SET count = count + 1 \
+                               WHERE name = ?" % (os.path.join(root, m_dir)))
+        except sqlite3.OperationalError as e:
+            logger.exception("Something awful happened!")
+            print(traceback.format_exc())
 
     if args.debug:
         logger.debug('Generating the files wordlist')
