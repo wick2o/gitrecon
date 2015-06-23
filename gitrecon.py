@@ -7,7 +7,6 @@ import datetime
 import threading
 import Queue
 import time
-import traceback
 import urllib2
 
 if sys.version[0] == '3':
@@ -160,24 +159,20 @@ def main():
         logger.debug('Populating the database')
 
     for root, dirs, files in os.walk('./%s' % args.username):
-        try:
-            for m_file in files:
-                try:
-                    cur.execute('INSERT INTO files (name) VALUES (?)',
-                            (os.path.join(root,m_file)))
-                except sqlite3.IntegrityError:
-                    cur.execute('UPDATE files SET count = count + 1 WHERE \
-                    name = ?', (os.path.join(root,m_file)))
-            for m_dir in dirs:
-                try:
-                    cur.execute('INSERT INTO dirs (name) VALUES (?)',
-                            (os.path.join(root, m_dir)))
-                except sqlite3.IntegrityError:
-                    cur.execute('UPDATE dirs SET count = count + 1 \
-                               WHERE name = ?' % (os.path.join(root, m_dir)))
-        except:
-            logger.exception('Something awful happened!')
-            print(traceback.format_exc())
+        for m_file in files:
+            try:
+                cur.execute('INSERT INTO files (name) VALUES (?)',
+                        (os.path.join(root,m_file),))
+            except sqlite3.IntegrityError:
+                cur.execute('UPDATE files SET count = count + 1 WHERE \
+                name = ?', (os.path.join(root,m_file)))
+        for m_dir in dirs:
+            try:
+                cur.execute('INSERT INTO dirs (name) VALUES (?)',
+                        (os.path.join(root,m_dir),))
+            except sqlite3.IntegrityError:
+                cur.execute('UPDATE dirs SET count = count + 1 \
+                           WHERE name = ?' % (os.path.join(root, m_dir)))
 
     if args.debug:
         logger.debug('Generating the files wordlist')
