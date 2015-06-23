@@ -17,7 +17,6 @@
 # GLOBAL IMPORTS
 import logging
 import os
-import os.path
 
 # GLOBAL VARS
 logger_name = 'gitrecon'
@@ -180,9 +179,9 @@ class Logger:
 # XXX Set up logfiles
 # =====================================================================================================================
 
-Logger.add_file_handler(logfile_path)
-#Logger.add_error_file_handler(errfile_path)
-#Logger.remove_console_handler()
+# Logger.add_file_handler(logfile_path)
+# Logger.add_error_file_handler(errfile_path)
+# Logger.remove_console_handler()
 Logger.set_verbose(default_log_level)
 
 # =====================================================================================================================
