@@ -58,13 +58,13 @@ if halt:
 
 
 def logo():
-    print('%s       _ _                            ' % (colors.red))
+    print('\033[91m')
     print('  __ _(_) |_ _ __ ___  ___ ___  _ __  ')
     print(' / _` | | __| \'__/ _ \/ __/ _ \| \'_ \ ')
     print('| (_| | | |_| | |  __/ (_| (_) | | | |')
     print(' \__, |_|\__|_|  \___|\___\___/|_| |_|')
     print(' |___/                                ')
-    print('%s' % colors.reset)
+    print('\033[0m')
     print('Authors:')
     print('    Jaime Filson aka WiK <wick2o@gmail.com>')
     print('    Borja Ruiz <borja@libcrack.so>')
