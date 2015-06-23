@@ -24,6 +24,8 @@ from Logger import Logger
 logger = Logger.logger
 colors = Colors.Colors()
 
+logfile = 'gitrecon.log'
+
 downloaded_repos = 0
 args = None
 halt = False
@@ -76,11 +78,7 @@ def parse_args():
     parser.add_argument('-t', '--threads', action='store', dest='threads', default=0, type=int, help='Number of threads')
     parser.add_argument('-d', '--debug', action='store_true', dest='debug', help='Show debug messages')
     global args
-    try:
-        args = parser.parse_args()
-    except SystemExit:
-        os.unlink('gitrecon.log')
-        sys.exit(1)
+    args = parser.parse_args()
 
 
 def get_repo_data(user):
@@ -114,6 +112,9 @@ def main():
     parse_args()
     repos, rate_limit = get_repo_data(args.username)
     repos_json = json.loads(repos)
+
+    logfile_path = os.path.join(os.getcwd(),args.username,logfile)
+    Logger.add_file_handler(logfile_path)
 
     logger.info('Using username %s' % args.username)
     logger.info('Downloading repos from http://www.github.com/%s' % args.username)
@@ -169,7 +170,7 @@ def main():
                     name = ?', (os.path.join(root, m_file)))
             for m_dir in dirs:
                 try:
-                    cur.execute('INSERT INTO dirs ('name') VALUES (?)',
+                    cur.execute('INSERT INTO dirs (\'name\') VALUES (?)',
                             (os.path.join(root, m_dir)))
                 except sqlite3.IntegrityError:
                     cur.execute('UPDATE dirs SET count = count + 1 \
@@ -226,13 +227,7 @@ def main():
         del db
 
     logger.info('Cloned %s repos from http://www.github.com/%s' % (downloaded_repos,args.username))
-
-    try:
-        os.move(os.path.abspath('./gitrecon.log'), os.path.abspath('%s/gitrecon.log' % args.username))
-    except:
-        logger.error('Cannot move logfile to %s' % os.path.abspath(args.username))
-    else:
-        logger.info('Logfile saved %s' % os.path.abspath('%s/gitrecon.log' % args.username))
+    logger.info('Logfile saved %s' % logfile_path)
 
 if __name__ == '__main__':
     main()
