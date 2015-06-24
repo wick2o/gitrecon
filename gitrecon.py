@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 import os
@@ -9,72 +9,54 @@ import Queue
 import time
 import urllib2
 
-if sys.version[0] == '3':
-    raise Exception('Python3 is not supported')
-
-MYPATH = os.path.abspath(os.path.expanduser(__file__))
-if os.path.islink(MYPATH):MYPATH = os.readlink(MYPATH)
-MYLIBPATH = os.path.dirname(MYPATH) + '/lib/'
-sys.path.append(os.path.dirname(MYLIBPATH))
-
-import Colors
-from Logger import Logger
-
-logger = Logger.logger
-colors = Colors.Colors()
-
-logfile = 'gitrecon.log'
-
-downloaded_repos = 0
-args = None
 halt = False
 
 try:
     import argparse
 except ImportError as e:
-    logger.error('Missing needed module: easy_install argparse')
+    print 'Missing needed module: easy_install argparse'
     halt = True
 
 try:
     import git
 except ImportError as e:
-    logger.error('Missing needed module: easy_install gitpython')
+    print 'Missing needed module: easy_install gitpython'
     halt = True
 
 try:
     import simplejson as json
 except ImportError as e:
-    logger.error('Missing needed module: easy_install simplejson')
+    print 'Missing needed module: easy_install simplejson'
     halt = True
 
 try:
     import sqlite3
 except ImportError as e:
-    logger.error('Missing needed module: easy_install sqlite3')
+    print 'Missing needed module: easy_install sqlite3'
     halt = True
 
 if halt:
-    sys.exit(1)
+    sys.exit()
 
 
 def logo():
-    print('\033[91m')
-    print('  __ _(_) |_ _ __ ___  ___ ___  _ __  ')
-    print(' / _` | | __| \'__/ _ \/ __/ _ \| \'_ \ ')
-    print('| (_| | | |_| | |  __/ (_| (_) | | | |')
-    print(' \__, |_|\__|_|  \___|\___\___/|_| |_|')
-    print(' |___/                                ')
-    print('\033[0m')
-    print('Authors:')
-    print('    Jaime Filson aka WiK <wick2o@gmail.com>')
-    print('    Borja Ruiz <borja@libcrack.so>')
-    print('License: BSD (3-Clause)\n')
+    print "       _ _                            "
+    print "  __ _(_) |_ _ __ ___  ___ ___  _ __  "
+    print " / _` | | __| '__/ _ \/ __/ _ \| '_ \ "
+    print "| (_| | | |_| | |  __/ (_| (_) | | | |"
+    print " \__, |_|\__|_|  \___|\___\___/|_| |_|"
+    print " |___/                                "
+    print "Author: Jaime Filson aka WiK"
+    print "Email: wick2o@gmail.com"
+    print "License: BSD (3-Clause)"
+    print ""
 
 
-def parse_args():
+def setup():
     parser = argparse.ArgumentParser()
     parser.add_argument('-u', '--username', action='store', dest='username', required=True, help='Github Username')
-    parser.add_argument('-t', '--threads', action='store', dest='threads', default=0, type=int, help='Number of threads')
+    parser.add_argument('-t', '--threads', action='store', dest='threads', default=0, type=int,
+                        help='Enable Threading. Specify max # of threads')
     parser.add_argument('-d', '--debug', action='store_true', dest='debug', help='Show debug messages')
     global args
     args = parser.parse_args()
@@ -83,9 +65,8 @@ def parse_args():
 def get_repo_data(user):
     url = 'https://api.github.com/users/%s/repos' % user
     req = urllib2.Request(url)
-    user_agent = 'Mozilla/5.0 (Windows NT 6.3; WOW64; rv:16.0.1) Gecko/20121011 Firefox/16.0.1'
-    logger.debug('Using User-Agent %s' % user_agent)
-    req.add_header('User-Agent',user_agent)
+    req.add_header('User-Agent', 'Mozilla/5.0 (Windows NT 6.3; \
+        WOW64; rv:16.0.1) Gecko/20121011 Firefox/16.0.1')
     page = urllib2.urlopen(req)
     page_content = page.read()
     page.close()
@@ -93,30 +74,23 @@ def get_repo_data(user):
 
 
 def dl_worker(repo):
-    global downloaded_repos
     try:
-        logger.info('Cloning %s' % repo['clone_url'])
+        print '%s Cloning %s' % (datetime.datetime.now(), repo['name'])
+
         dlw_res = git.Git().clone(repo['clone_url'], repo['full_name'])
-        downloaded_repos = downloaded_repos + 1
-        logger.info('Completed %s' % repo['name'])
+
+        print '%s Completed %s' % (datetime.datetime.now(), repo['name'])
         del dlw_res
     except Exception as err:
-        logger.error('There was a problem cloning %s %s' % (repo['name'], err.message))
+        print '%s There was a problem cloning %s %s' % (datetime.datetime.now(), repo['name'], err.message)
 
 
 def main():
-    global downloaded_repos
-    global args
     logo()
-    parse_args()
+    setup()
+
     repos, rate_limit = get_repo_data(args.username)
     repos_json = json.loads(repos)
-
-    logfile_path = os.path.join(os.getcwd(),args.username,logfile)
-    Logger.add_file_handler(logfile_path)
-
-    logger.info('Using username %s' % args.username)
-    logger.info('Downloading repos from http://www.github.com/%s' % args.username)
 
     if args.threads > 1:
         q = Queue.Queue()
@@ -141,14 +115,15 @@ def main():
         for itm in repos_json:
             dl_worker(itm)
 
-    logger.info('You may request up to %s more users this hour' % rate_limit)
-
-    logger.info('Generating wordlists')
+    print '%s You may request up to %s more users this hour' % \
+        (datetime.datetime.now(), rate_limit)
+    print '%s Generating wordlists' % \
+        (datetime.datetime.now())
 
     if args.debug:
-        logger.debug('Creating a database in memory')
-
-    db = sqlite3.connect(':memory:')
+        print '%s [DEBUG] Creating a database in memory' % \
+            (datetime.datetime.now())
+    db = sqlite3.connect(":memory:")
     cur = db.cursor()
     cur.execute('CREATE TABLE files (id INTEGER PRIMARY KEY, name \
                 varchar(255) UNIQUE, count int DEFAULT 1)')
@@ -156,63 +131,45 @@ def main():
                 varchar(255) UNIQUE, count int DEFAULT 1)')
 
     if args.debug:
-        logger.debug('Populating the database')
+        print '%s [DEBUG] Populating the database' % (datetime.datetime.now())
 
-    for root, dirs, files in os.walk('./%s' % args.username):
-        for m_file in files:
+    for r, d, f in os.walk('./%s' % args.username):
+        for m_file in f:
             try:
-                cur.execute('INSERT INTO files (name) VALUES (?)',
-                        (os.path.join(root,m_file),))
+                cur.execute("INSERT INTO files ('name') VALUES ('%s')" % m_file)
             except sqlite3.IntegrityError:
-                cur.execute('UPDATE files SET count = count + 1 WHERE \
-                name = ?', (os.path.join(root,m_file)))
-        for m_dir in dirs:
+                cur.execute("UPDATE files SET count = count + 1 WHERE \
+                name = '%s'" % m_file)
+        for m_dir in d:
             try:
-                cur.execute('INSERT INTO dirs (name) VALUES (?)',
-                        (os.path.join(root,m_dir),))
+                cur.execute("INSERT INTO dirs ('name') VALUES ('%s')" % m_dir)
             except sqlite3.IntegrityError:
-                cur.execute('UPDATE dirs SET count = count + 1 \
-                           WHERE name = ?' % (os.path.join(root, m_dir)))
+                cur.execute("UPDATE dirs SET count = count + 1 \
+                           WHERE name = '%s'" % m_dir)
 
     if args.debug:
-        logger.debug('Generating the files wordlist')
+        print '%s [DEBUG] Generating the files wordlist' % \
+            (datetime.datetime.now())
 
-    try:
-        cur.execute('SELECT name FROM files ORDER BY count DESC')
-        res = cur.fetchall()
-    except sqlite3.OperationalError as e:
-        logger.error('Error getting file list from database')
-
-    filename = '%s/%s-files.txt' % (args.username,args.username)
-    logger.info('Writing %s' % filename)
-    try:
-        fp = open(filename, 'w')
-        for itm in res:
-            encoded_itm = itm[0].encode('utf8')
-            if isinstance(itm[0],basestring):
-                encoded_itm = itm[0].encode('utf8')
-            else:
-                encoded_itm = unicode(itm[0]).encode('utf8')
-            fp.write('%s\n' % (encoded_itm))
-        fp.close()
-    except (OSError, IOError):
-        logger.error('Cannot write to %s' % filename)
-
-    if args.debug:
-        logger.debug('Generating the dirs wordlist')
-
-    cur.execute('SELECT name FROM dirs ORDER BY count DESC')
+    cur.execute("SELECT name FROM files ORDER BY count DESC")
     res = cur.fetchall()
+    fp = open('./%s-files.txt' % args.username, 'w')
 
-    filename = '%s/%s-dirs.txt' % (args.username,args.username)
-    logger.info('Writing %s' % filename)
-    try:
-        fp = open(filename, 'w')
-        for itm in res:
-            fp.write('%s\n' % (itm[0]))
-        fp.close()
-    except (OSError, IOError):
-        logger.error('Cannot write to %s' % filename)
+    for itm in res:
+        fp.write('%s\n' % (itm[0]))
+    fp.close()
+
+    if args.debug:
+        print '%s [DEBUG] Generating the dirs wordlist' % \
+            (datetime.datetime.now())
+
+    cur.execute("SELECT name FROM dirs ORDER BY count DESC")
+    res = cur.fetchall()
+    fp = open('./%s-dirs.txt' % args.username, 'w')
+
+    for itm in res:
+        fp.write('%s\n' % (itm[0]))
+    fp.close()
 
     if cur:
         cur.close()
@@ -220,9 +177,6 @@ def main():
     if db:
         db.close()
         del db
-
-    logger.info('Cloned %s repos from http://www.github.com/%s' % (downloaded_repos,args.username))
-    logger.info('Logfile saved %s' % logfile_path)
 
 if __name__ == '__main__':
     main()
