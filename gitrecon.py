@@ -17,11 +17,9 @@ if os.path.islink(MYPATH):MYPATH = os.readlink(MYPATH)
 MYLIBPATH = os.path.dirname(MYPATH) + '/lib/'
 sys.path.append(os.path.dirname(MYLIBPATH))
 
-import Colors
 from Logger import Logger
 
 logger = Logger.logger
-colors = Colors.Colors()
 
 logfile = 'gitrecon.log'
 
