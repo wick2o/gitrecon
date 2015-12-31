@@ -1,9 +1,19 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
+# pylint: disable-msg=C0103
+# pylint: disable-msg=C0301
+# pylint: disable-msg=W0611
+# pylint: disable-msg=W0612
+# pylint: disable-msg=W0702
+# pylint: disable-msg=W0703
+# pylint: disable-msg=W0621
+# pylint: disable-msg=R0913
+# http://pylint-messages.wikidot.com/all-codes
 
 import os
 import sys
 import datetime
+import logging
 import threading
 import Queue
 import time
@@ -12,16 +22,24 @@ import urllib2
 if sys.version[0] == '3':
     raise Exception('Python3 is not supported')
 
-MYPATH = os.path.abspath(os.path.expanduser(__file__))
-if os.path.islink(MYPATH):MYPATH = os.readlink(MYPATH)
-MYLIBPATH = os.path.dirname(MYPATH) + '/lib/'
-sys.path.append(os.path.dirname(MYLIBPATH))
+logger_name = 'gitrecon'
+logfile = '{0}.log'.format(logger_name)
 
-from Logger import Logger
+### METHOD #1
+# from Logger import Logger
+# default_log_level = 'debug'
+# logging.basicConfig(level=default_log_level)
+# logfile_path = os.path.join(os.getcwd(),args.username,logfile)
+# Logger.add_file_handler(logfile_path)
+# logger = Logger.logger
 
-logger = Logger.logger
-
-logfile = 'gitrecon.log'
+### METHOD #2
+logger = logging.getLogger(logger_name)
+logger.setLevel(logging.DEBUG)
+formatter = logging.Formatter("%(asctime)s %(module)s [%(levelname)s]: %(message)s")
+streamhandler = logging.StreamHandler()
+streamhandler.setFormatter(formatter)
+logger.addHandler(streamhandler)
 
 downloaded_repos = 0
 args = None
@@ -109,9 +127,6 @@ def main():
     parse_args()
     repos, rate_limit = get_repo_data(args.username)
     repos_json = json.loads(repos)
-
-    logfile_path = os.path.join(os.getcwd(),args.username,logfile)
-    Logger.add_file_handler(logfile_path)
 
     logger.info('Using username %s' % args.username)
     logger.info('Downloading repos from http://www.github.com/%s' % args.username)
@@ -220,7 +235,9 @@ def main():
         del db
 
     logger.info('Cloned %s repos from http://www.github.com/%s' % (downloaded_repos,args.username))
-    logger.info('Logfile saved %s' % logfile_path)
+    logger.info('Logfile "%s" saved' % logfile)
 
 if __name__ == '__main__':
     main()
+
+# vim:ts=4 sts=4 tw=100:
