@@ -35,7 +35,7 @@ logfile = '{0}.log'.format(logger_name)
 
 ### METHOD #2
 logger = logging.getLogger(logger_name)
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 formatter = logging.Formatter("%(asctime)s %(module)s [%(levelname)s]: %(message)s")
 streamhandler = logging.StreamHandler()
 streamhandler.setFormatter(formatter)
