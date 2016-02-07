@@ -6,9 +6,8 @@
 # pylint: disable-msg=W0612
 # pylint: disable-msg=W0702
 # pylint: disable-msg=W0703
-# pylint: disable-msg=W0621
-# pylint: disable-msg=R0913
-# http://pylint-messages.wikidot.com/all-codes
+#!/usr/bin/env python2
+# -*- coding: utf-8 -*-
 
 import os
 import sys
@@ -22,24 +21,16 @@ import urllib2
 if sys.version[0] == '3':
     raise Exception('Python3 is not supported')
 
-logger_name = 'gitrecon'
-logfile = '{0}.log'.format(logger_name)
+LOG_FORMAT = '%(asctime)s [%(levelname)s] %(module)s.%(funcName)s : %(message)s'
 
-### METHOD #1
-# from Logger import Logger
-# default_log_level = 'debug'
-# logging.basicConfig(level=default_log_level)
-# logfile_path = os.path.join(os.getcwd(),args.username,logfile)
-# Logger.add_file_handler(logfile_path)
-# logger = Logger.logger
+logname = 'gitrecon'
+logfile = '{0}.log'.format(logname)
+logging.basicConfig(level=(logging.INFO))
+logger = logging.getLogger(logname)
 
-### METHOD #2
-logger = logging.getLogger(logger_name)
-logger.setLevel(logging.INFO)
-formatter = logging.Formatter("%(asctime)s %(module)s [%(levelname)s]: %(message)s")
-streamhandler = logging.StreamHandler()
-streamhandler.setFormatter(formatter)
-logger.addHandler(streamhandler)
+__formatter = logging.Formatter(LOG_FORMAT)
+__streamhandler = logging.StreamHandler()
+__streamhandler.setFormatter(__formatter)
 
 downloaded_repos = 0
 args = None
@@ -127,6 +118,9 @@ def main():
     parse_args()
     repos, rate_limit = get_repo_data(args.username)
     repos_json = json.loads(repos)
+
+    logfile_path = os.path.join(os.getcwd(),args.username,logfile)
+    Logger.add_file_handler(logfile_path)
 
     logger.info('Using username %s' % args.username)
     logger.info('Downloading repos from http://www.github.com/%s' % args.username)
@@ -235,7 +229,7 @@ def main():
         del db
 
     logger.info('Cloned %s repos from http://www.github.com/%s' % (downloaded_repos,args.username))
-    logger.info('Logfile "%s" saved' % logfile)
+    logger.info('Logfile saved %s' % logfile_path)
 
 if __name__ == '__main__':
     main()
