@@ -28,9 +28,14 @@ logfile = '{0}.log'.format(logname)
 logging.basicConfig(level=(logging.INFO))
 logger = logging.getLogger(logname)
 
-__formatter = logging.Formatter(LOG_FORMAT)
-__streamhandler = logging.StreamHandler()
-__streamhandler.setFormatter(__formatter)
+# __formatter = logging.Formatter(LOG_FORMAT)
+# __streamhandler = logging.StreamHandler()
+# __streamhandler.setFormatter(__formatter)
+
+# __streamhandler = logging.StreamHandler()
+# __streamhandler.setFormatter(__formatter)
+# logger.addHandler(__streamhandler)
+
 
 downloaded_repos = 0
 args = None
@@ -120,10 +125,14 @@ def main():
     repos_json = json.loads(repos)
 
     logfile_path = os.path.join(os.getcwd(),args.username,logfile)
-    Logger.add_file_handler(logfile_path)
+    logfile_dir = os.path.dirname(logfile_path)
+    if not os.path.exists(logfile_dir): os.mkdir(logfile_dir)
 
-    logger.info('Using username %s' % args.username)
-    logger.info('Downloading repos from http://www.github.com/%s' % args.username)
+    __filehandler = logging.FileHandler(os.path.realpath(logfile_path))
+    logger.addHandler(__filehandler)
+
+    logger.info('Using username "{0}"'.format(args.username))
+    logger.info('Downloading repos from http://www.github.com/{0}'.format(args.username))
 
     if args.threads > 1:
         q = Queue.Queue()
