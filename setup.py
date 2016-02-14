@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 # Author: borja@libcrack.so
 # Date: Wed Jan 28 16:35:57 CET 2015
@@ -28,7 +28,7 @@ LICENSE = read('LICENSE')
 #PACKAGES = find_packages(exclude=['tests', 'tests.*'])
 PACKAGES = [NAME]
 PACKAGE_DATA = {NAME: ['data/*'], }
-PACKAGE_DIR = {NAME: 'src'}
+PACKAGE_DIR = {NAME: '.'}
 INSTALL_REQUIRES = [
     x.replace(
         '-',
@@ -65,14 +65,14 @@ PARAMS = {
     'license': LICENSE,
     'packages': PACKAGES,
     'package_dir': PACKAGE_DIR,
-    'package_data': PACKAGE_DATA,
+    #'package_data': PACKAGE_DATA,
     'provides': PROVIDES,
     'requires': INSTALL_REQUIRES,
     'install_requires': INSTALL_REQUIRES,
     #'tests_require':    TESTS_REQUIRE,
     #'test_suite':       TEST_SUITE,
     'classifiers': CLASSIFIERS,
-}
+    }
 
 setup(**PARAMS)
 
