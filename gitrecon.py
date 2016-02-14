@@ -87,9 +87,27 @@ def logo():
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('-u', '--username', action='store', dest='username', required=True, help='Github Username')
-    parser.add_argument('-t', '--threads', action='store', dest='threads', default=0, type=int, help='Number of threads')
-    parser.add_argument('-d', '--debug', action='store_true', dest='debug', help='Show debug messages')
+    parser.add_argument(
+        '-u',
+        '--username',
+        action='store',
+        dest='username',
+        required=True,
+        help='Github Username')
+    parser.add_argument(
+        '-t',
+        '--threads',
+        action='store',
+        dest='threads',
+        default=0,
+        type=int,
+        help='Number of threads')
+    parser.add_argument(
+        '-d',
+        '--debug',
+        action='store_true',
+        dest='debug',
+        help='Show debug messages')
     global args
     args = parser.parse_args()
 
@@ -99,7 +117,7 @@ def get_repo_data(user):
     req = urllib2.Request(url)
     user_agent = 'Mozilla/5.0 (Windows NT 6.3; WOW64; rv:16.0.1) Gecko/20121011 Firefox/16.0.1'
     logger.debug('Using User-Agent %s' % user_agent)
-    req.add_header('User-Agent',user_agent)
+    req.add_header('User-Agent', user_agent)
     page = urllib2.urlopen(req)
     page_content = page.read()
     page.close()
@@ -115,7 +133,9 @@ def dl_worker(repo):
         logger.info('Completed %s' % repo['name'])
         del dlw_res
     except Exception as err:
-        logger.error('There was a problem cloning %s %s' % (repo['name'], err.message))
+        logger.error(
+            'There was a problem cloning %s %s' %
+            (repo['name'], err.message))
 
 
 def main():
@@ -126,15 +146,17 @@ def main():
     repos, rate_limit = get_repo_data(args.username)
     repos_json = json.loads(repos)
 
-    logfile_path = os.path.join(os.getcwd(),args.username,logfile)
+    logfile_path = os.path.join(os.getcwd(), args.username, logfile)
     logfile_dir = os.path.dirname(logfile_path)
-    if not os.path.exists(logfile_dir): os.mkdir(logfile_dir)
+    if not os.path.exists(logfile_dir):
+        os.mkdir(logfile_dir)
 
     __filehandler = logging.FileHandler(os.path.realpath(logfile_path))
     logger.addHandler(__filehandler)
 
     logger.info('Using username "{0}"'.format(args.username))
-    logger.info('Downloading repos from http://www.github.com/{0}'.format(args.username))
+    logger.info(
+        'Downloading repos from http://www.github.com/{0}'.format(args.username))
 
     if args.threads > 1:
         q = Queue.Queue()
@@ -180,14 +202,14 @@ def main():
         for m_file in files:
             try:
                 cur.execute('INSERT INTO files (name) VALUES (?)',
-                        (os.path.join(root,m_file),))
+                            (os.path.join(root, m_file),))
             except sqlite3.IntegrityError:
                 cur.execute('UPDATE files SET count = count + 1 WHERE \
-                name = ?', (os.path.join(root,m_file)))
+                name = ?', (os.path.join(root, m_file)))
         for m_dir in dirs:
             try:
                 cur.execute('INSERT INTO dirs (name) VALUES (?)',
-                        (os.path.join(root,m_dir),))
+                            (os.path.join(root, m_dir),))
             except sqlite3.IntegrityError:
                 cur.execute('UPDATE dirs SET count = count + 1 \
                            WHERE name = ?' % (os.path.join(root, m_dir)))
@@ -201,13 +223,13 @@ def main():
     except sqlite3.OperationalError as e:
         logger.error('Error getting file list from database')
 
-    filename = '%s/%s-files.txt' % (args.username,args.username)
+    filename = '%s/%s-files.txt' % (args.username, args.username)
     logger.info('Writing %s' % filename)
     try:
         fp = open(filename, 'w')
         for itm in res:
             encoded_itm = itm[0].encode('utf8')
-            if isinstance(itm[0],basestring):
+            if isinstance(itm[0], basestring):
                 encoded_itm = itm[0].encode('utf8')
             else:
                 encoded_itm = unicode(itm[0]).encode('utf8')
@@ -222,7 +244,7 @@ def main():
     cur.execute('SELECT name FROM dirs ORDER BY count DESC')
     res = cur.fetchall()
 
-    filename = '%s/%s-dirs.txt' % (args.username,args.username)
+    filename = '%s/%s-dirs.txt' % (args.username, args.username)
     logger.info('Writing %s' % filename)
     try:
         fp = open(filename, 'w')
@@ -239,7 +261,9 @@ def main():
         db.close()
         del db
 
-    logger.info('Cloned %s repos from http://www.github.com/%s' % (downloaded_repos,args.username))
+    logger.info(
+        'Cloned %s repos from http://www.github.com/%s' %
+        (downloaded_repos, args.username))
     logger.info('Logfile saved %s' % logfile_path)
 
 if __name__ == '__main__':

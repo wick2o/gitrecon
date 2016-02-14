@@ -18,7 +18,7 @@ def read(relpath):
 
 NAME = 'gitrecon'
 VERSION = re.search("__version__ = ([^']+)",
-                   read('gitrecon.py')).group(1)
+                    read('gitrecon.py')).group(1)
 DESCRIPTION = 'Massive GIT repo clonning using a GitHub username.'
 KEYWORDS = 'git'
 AUTHOR = 'libcrack'
@@ -27,7 +27,7 @@ URL = 'https://www.github.com/libcrack/gitrecon'
 LICENSE = read('LICENSE')
 #PACKAGES = find_packages(exclude=['tests', 'tests.*'])
 PACKAGES = [NAME]
-PACKAGE_DATA = {NAME: ['data/*'],}
+PACKAGE_DATA = {NAME: ['data/*'], }
 PACKAGE_DIR = {NAME: 'src'}
 INSTALL_REQUIRES = [
     x.replace(
