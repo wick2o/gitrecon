@@ -1,5 +1,5 @@
 argparse
-git
+gitpython
 simplejson
 sqlite3
 urllib2
