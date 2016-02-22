@@ -21,8 +21,8 @@ import Queue
 import time
 import urllib2
 
-__author__ = "libcrack"
-__email__ = "devnull@libcrack.so"
+__author__ = "Jaime Filson <wick2o@gmail.com>, Borja Ruiz <borja@libcrack.so>"
+__email__ = "wick2o@gmail.com, borja@libcrack.so"
 __date__ = "Date: Wed Jan 28 16:35:57 CET 2015"
 __version__ = 0.5
 
