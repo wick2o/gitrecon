@@ -6,8 +6,11 @@
 # pylint: disable-msg=W0612
 # pylint: disable-msg=W0702
 # pylint: disable-msg=W0703
-#!/usr/bin/env python2
-# -*- coding: utf-8 -*-
+# pylint: disable-msg=W0621
+# pylint: disable-msg=R0913
+"""
+Massive GitHub repo clonning
+"""
 
 import os
 import sys
@@ -21,51 +24,29 @@ import urllib2
 if sys.version[0] == '3':
     raise Exception('Python3 is not supported')
 
-LOG_FORMAT = '%(asctime)s [%(levelname)s] %(module)s.%(funcName)s : %(message)s'
-
 logname = 'gitrecon'
 logfile = '{0}.log'.format(logname)
 logging.basicConfig(level=(logging.INFO))
 logger = logging.getLogger(logname)
 
+# LOG_FORMAT = '%(asctime)s [%(levelname)s] %(module)s.%(funcName)s : %(message)s'
 # __formatter = logging.Formatter(LOG_FORMAT)
 # __streamhandler = logging.StreamHandler()
 # __streamhandler.setFormatter(__formatter)
-
-# __streamhandler = logging.StreamHandler()
-# __streamhandler.setFormatter(__formatter)
 # logger.addHandler(__streamhandler)
-
 
 downloaded_repos = 0
 args = None
 halt = False
 
 try:
-    import argparse
-except ImportError as e:
-    logger.error('Missing needed module: easy_install argparse')
-    halt = True
-
-try:
     import git
-except ImportError as e:
-    logger.error('Missing needed module: easy_install gitpython')
-    halt = True
-
-try:
+    import sqlite3
+    import argparse
     import simplejson as json
 except ImportError as e:
-    logger.error('Missing needed module: easy_install simplejson')
-    halt = True
-
-try:
-    import sqlite3
-except ImportError as e:
-    logger.error('Missing needed module: easy_install sqlite3')
-    halt = True
-
-if halt:
+    logger.exception('Missing mandatory module(s): {0}'.format(e.message))
+    logger.exception('Use pip install -r requirements.txt')
     sys.exit(1)
 
 
@@ -112,8 +93,8 @@ def dl_worker(repo):
         downloaded_repos = downloaded_repos + 1
         logger.info('Completed %s' % repo['name'])
         del dlw_res
-    except Exception as err:
-        logger.error('There was a problem cloning %s %s' % (repo['name'], err.message))
+    except Exception as e:
+        logger.exception('There was a problem cloning %s %s' % (repo['name'], e.message))
 
 
 def main():
@@ -197,7 +178,7 @@ def main():
         cur.execute('SELECT name FROM files ORDER BY count DESC')
         res = cur.fetchall()
     except sqlite3.OperationalError as e:
-        logger.error('Error getting file list from database')
+        logger.exception('Error getting file list from database: {0}'.format(e))
 
     filename = '%s/%s-files.txt' % (args.username,args.username)
     logger.info('Writing %s' % filename)
@@ -211,8 +192,8 @@ def main():
                 encoded_itm = unicode(itm[0]).encode('utf8')
             fp.write('%s\n' % (encoded_itm))
         fp.close()
-    except (OSError, IOError):
-        logger.error('Cannot write to %s' % filename)
+    except (OSError, IOError) as e:
+        logger.exception('Cannot write to "{0}": {1}'.format(filename, e.message))
 
     if args.debug:
         logger.debug('Generating the dirs wordlist')
@@ -227,8 +208,8 @@ def main():
         for itm in res:
             fp.write('%s\n' % (itm[0]))
         fp.close()
-    except (OSError, IOError):
-        logger.error('Cannot write to %s' % filename)
+    except (OSError, IOError) as e:
+        logger.exception('Cannot write to "{0}": {1}'.format(filename,e.message))
 
     if cur:
         cur.close()
