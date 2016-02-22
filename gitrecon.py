@@ -21,6 +21,11 @@ import Queue
 import time
 import urllib2
 
+__author__ = "libcrack"
+__email__ = "devnull@libcrack.so"
+__date__ = "Date: Wed Jan 28 16:35:57 CET 2015"
+__version__ = 0.5
+
 if sys.version[0] == '3':
     raise Exception('Python3 is not supported')
 
