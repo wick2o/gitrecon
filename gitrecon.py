@@ -18,24 +18,26 @@ import Queue
 import time
 import urllib2
 
+__author__ = "Jaime Filson <wick2o@gmail.com>, Borja Ruiz <borja@libcrack.so>"
+__email__ = "wick2o@gmail.com, borja@libcrack.so"
+__date__ = "Date: Wed Jan 28 16:35:57 CET 2015"
+__version__ = 0.5
+
 if sys.version[0] == '3':
     raise Exception('Python3 is not supported')
-
-LOG_FORMAT = '%(asctime)s [%(levelname)s] %(module)s.%(funcName)s : %(message)s'
 
 logname = 'gitrecon'
 logfile = '{0}.log'.format(logname)
 logging.basicConfig(level=(logging.INFO))
 logger = logging.getLogger(logname)
 
+# LOG_FORMAT = '%(asctime)s [%(levelname)s] %(module)s.%(funcName)s : %(message)s'
 # __formatter = logging.Formatter(LOG_FORMAT)
 # __streamhandler = logging.StreamHandler()
 # __streamhandler.setFormatter(__formatter)
-
 # __streamhandler = logging.StreamHandler()
 # __streamhandler.setFormatter(__formatter)
 # logger.addHandler(__streamhandler)
-
 
 downloaded_repos = 0
 args = None
