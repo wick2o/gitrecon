@@ -6,8 +6,6 @@
 # pylint: disable-msg=W0612
 # pylint: disable-msg=W0702
 # pylint: disable-msg=W0703
-#!/usr/bin/env python2
-# -*- coding: utf-8 -*-
 
 import os
 import sys
@@ -99,7 +97,7 @@ def get_repo_data(user):
     req = urllib2.Request(url)
     user_agent = 'Mozilla/5.0 (Windows NT 6.3; WOW64; rv:16.0.1) Gecko/20121011 Firefox/16.0.1'
     logger.debug('Using User-Agent %s' % user_agent)
-    req.add_header('User-Agent',user_agent)
+    req.add_header('User-Agent', user_agent)
     page = urllib2.urlopen(req)
     page_content = page.read()
     page.close()
@@ -126,7 +124,7 @@ def main():
     repos, rate_limit = get_repo_data(args.username)
     repos_json = json.loads(repos)
 
-    logfile_path = os.path.join(os.getcwd(),args.username,logfile)
+    logfile_path = os.path.join(os.getcwd(), args.username, logfile)
     logfile_dir = os.path.dirname(logfile_path)
     if not os.path.exists(logfile_dir): os.mkdir(logfile_dir)
 
@@ -180,14 +178,14 @@ def main():
         for m_file in files:
             try:
                 cur.execute('INSERT INTO files (name) VALUES (?)',
-                        (os.path.join(root,m_file),))
+                            (os.path.join(root, m_file),))
             except sqlite3.IntegrityError:
                 cur.execute('UPDATE files SET count = count + 1 WHERE \
-                name = ?', (os.path.join(root,m_file)))
+                name = ?', (os.path.join(root, m_file)))
         for m_dir in dirs:
             try:
                 cur.execute('INSERT INTO dirs (name) VALUES (?)',
-                        (os.path.join(root,m_dir),))
+                            (os.path.join(root, m_dir),))
             except sqlite3.IntegrityError:
                 cur.execute('UPDATE dirs SET count = count + 1 \
                            WHERE name = ?' % (os.path.join(root, m_dir)))
@@ -201,13 +199,13 @@ def main():
     except sqlite3.OperationalError as e:
         logger.error('Error getting file list from database')
 
-    filename = '%s/%s-files.txt' % (args.username,args.username)
+    filename = '%s/%s-files.txt' % (args.username, args.username)
     logger.info('Writing %s' % filename)
     try:
         fp = open(filename, 'w')
         for itm in res:
             encoded_itm = itm[0].encode('utf8')
-            if isinstance(itm[0],basestring):
+            if isinstance(itm[0], basestring):
                 encoded_itm = itm[0].encode('utf8')
             else:
                 encoded_itm = unicode(itm[0]).encode('utf8')
@@ -222,7 +220,7 @@ def main():
     cur.execute('SELECT name FROM dirs ORDER BY count DESC')
     res = cur.fetchall()
 
-    filename = '%s/%s-dirs.txt' % (args.username,args.username)
+    filename = '%s/%s-dirs.txt' % (args.username, args.username)
     logger.info('Writing %s' % filename)
     try:
         fp = open(filename, 'w')
