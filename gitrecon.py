@@ -189,14 +189,14 @@ def main():
         for m_file in files:
             try:
                 cur.execute('INSERT INTO files (name) VALUES (?)',
-                        (os.path.join(root,m_file),))
+                            (os.path.join(root, m_file),))
             except sqlite3.IntegrityError:
                 cur.execute('UPDATE files SET count = count + 1 WHERE \
-                name = ?', (os.path.join(root,m_file)))
+                name = ?', (os.path.join(root, m_file)))
         for m_dir in dirs:
             try:
                 cur.execute('INSERT INTO dirs (name) VALUES (?)',
-                        (os.path.join(root,m_dir),))
+                            (os.path.join(root, m_dir),))
             except sqlite3.IntegrityError:
                 cur.execute('UPDATE dirs SET count = count + 1 \
                            WHERE name = ?' % (os.path.join(root, m_dir)))
