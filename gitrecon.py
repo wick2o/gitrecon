@@ -1,29 +1,43 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
+# pylint: disable-msg=C0103
+# pylint: disable-msg=C0301
+# pylint: disable-msg=W0611
+# pylint: disable-msg=W0612
+# pylint: disable-msg=W0702
+# pylint: disable-msg=W0703
+#!/usr/bin/env python2
+# -*- coding: utf-8 -*-
 
 import os
 import sys
 import datetime
+import logging
 import threading
 import Queue
 import time
 import urllib2
 
+__author__ = "Jaime Filson <wick2o@gmail.com>, Borja Ruiz <borja@libcrack.so>"
+__email__ = "wick2o@gmail.com, borja@libcrack.so"
+__date__ = "Date: Wed Jan 28 16:35:57 CET 2015"
+__version__ = 0.5
+
 if sys.version[0] == '3':
     raise Exception('Python3 is not supported')
 
-MYPATH = os.path.abspath(os.path.expanduser(__file__))
-if os.path.islink(MYPATH):MYPATH = os.readlink(MYPATH)
-MYLIBPATH = os.path.dirname(MYPATH) + '/lib/'
-sys.path.append(os.path.dirname(MYLIBPATH))
+logname = 'gitrecon'
+logfile = '{0}.log'.format(logname)
+logging.basicConfig(level=(logging.INFO))
+logger = logging.getLogger(logname)
 
-import Colors
-from Logger import Logger
-
-logger = Logger.logger
-colors = Colors.Colors()
-
-logfile = 'gitrecon.log'
+# LOG_FORMAT = '%(asctime)s [%(levelname)s] %(module)s.%(funcName)s : %(message)s'
+# __formatter = logging.Formatter(LOG_FORMAT)
+# __streamhandler = logging.StreamHandler()
+# __streamhandler.setFormatter(__formatter)
+# __streamhandler = logging.StreamHandler()
+# __streamhandler.setFormatter(__formatter)
+# logger.addHandler(__streamhandler)
 
 downloaded_repos = 0
 args = None
@@ -113,10 +127,14 @@ def main():
     repos_json = json.loads(repos)
 
     logfile_path = os.path.join(os.getcwd(),args.username,logfile)
-    Logger.add_file_handler(logfile_path)
+    logfile_dir = os.path.dirname(logfile_path)
+    if not os.path.exists(logfile_dir): os.mkdir(logfile_dir)
 
-    logger.info('Using username %s' % args.username)
-    logger.info('Downloading repos from http://www.github.com/%s' % args.username)
+    __filehandler = logging.FileHandler(os.path.realpath(logfile_path))
+    logger.addHandler(__filehandler)
+
+    logger.info('Using username "{0}"'.format(args.username))
+    logger.info('Downloading repos from http://www.github.com/{0}'.format(args.username))
 
     if args.threads > 1:
         q = Queue.Queue()
@@ -226,3 +244,5 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+# vim:ts=4 sts=4 tw=100:
