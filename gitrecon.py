@@ -71,9 +71,10 @@ def logo():
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('-u', '--username', action='store', dest='username', required=True, help='Github Username')
-    parser.add_argument('-t', '--threads', action='store', dest='threads', default=0, type=int, help='Number of threads')
-    parser.add_argument('-d', '--debug', action='store_true', dest='debug', help='Show debug messages')
+    parser.add_argument('-d', '--debug',    action='store_true', dest='debug', default=False, help='Show debug messages')
+    parser.add_argument('-r', '--repos',    action='store', dest='repos', default=None, type=str, help='Repo list (comma separated)')
+    parser.add_argument('-t', '--threads',  action='store', dest='threads', default=0, type=int, help='Number of threads')
+    parser.add_argument('-u', '--username', action='store', dest='username', required=True, help='Github username')
     global args
     args = parser.parse_args()
 
@@ -82,7 +83,8 @@ def get_repo_data(user):
     url = 'https://api.github.com/users/%s/repos' % user
     req = urllib2.Request(url)
     user_agent = 'Mozilla/5.0 (Windows NT 6.3; WOW64; rv:16.0.1) Gecko/20121011 Firefox/16.0.1'
-    logger.debug('Using User-Agent %s' % user_agent)
+    if args.debug is True:
+        logger.debug('Using User-Agent %s' % user_agent)
     req.add_header('User-Agent', user_agent)
     page = urllib2.urlopen(req)
     page_content = page.read()
@@ -107,8 +109,6 @@ def main():
     global args
     logo()
     parse_args()
-    repos, rate_limit = get_repo_data(args.username)
-    repos_json = json.loads(repos)
 
     logfile_path = os.path.join(os.getcwd(), args.username, logfile)
     logfile_dir = os.path.dirname(logfile_path)
@@ -118,8 +118,32 @@ def main():
     __filehandler = logging.FileHandler(os.path.realpath(logfile_path))
     logger.addHandler(__filehandler)
 
+    if args.debug is True:
+        logger.setLevel(logging.DEBUG)
+
     logger.info('Using username "{0}"'.format(args.username))
     logger.info('Downloading repos from http://www.github.com/{0}'.format(args.username))
+
+    repodata, rate_limit = get_repo_data(args.username)
+
+    if args.repos is None:
+        repos_json = json.loads(repodata)
+    else:
+        repos_json = ''
+        tmp_list = []
+        for r in args.repos.split(","):
+            tmp_str = {
+                "clone_url": "https://github.com/{0}/{1}.git".format(args.username, r),
+                "full_name": os.path.realpath("{0}/{1}".format(args.username, r)),
+                "name": "{0}".format(r)}
+            tmp_list.append(tmp_str)
+            if args.debug is True:
+                logger.debug("Adding repo: {0}".format(tmp_str))
+        repos_json_dumps = json.dumps(tmp_list)
+        repos_json = json.loads(repos_json_dumps)
+
+    if args.debug is True and repos_json is not None:
+        logger.debug('JSON response: {0}'.format(repos_json))
 
     if args.threads > 1:
         q = Queue.Queue()
@@ -148,7 +172,7 @@ def main():
 
     logger.info('Generating wordlists')
 
-    if args.debug:
+    if args.debug is True:
         logger.debug('Creating a database in memory')
 
     db = sqlite3.connect(':memory:')
@@ -158,7 +182,7 @@ def main():
     cur.execute('CREATE TABLE dirs (id INTEGER PRIMARY KEY, name \
                 varchar(255) UNIQUE, count int DEFAULT 1)')
 
-    if args.debug:
+    if args.debug is True:
         logger.debug('Populating the database')
 
     for root, dirs, files in os.walk('./%s' % args.username):
@@ -177,7 +201,7 @@ def main():
                 cur.execute('UPDATE dirs SET count = count + 1 \
                            WHERE name = ?' % (os.path.join(root, m_dir)))
 
-    if args.debug:
+    if args.debug is True:
         logger.debug('Generating the files wordlist')
 
     try:
@@ -201,7 +225,7 @@ def main():
     except (OSError, IOError) as e:
         logger.exception('Cannot write to "{0}": {1}'.format(filename, e.message))
 
-    if args.debug:
+    if args.debug is True:
         logger.debug('Generating the dirs wordlist')
 
     cur.execute('SELECT name FROM dirs ORDER BY count DESC')
