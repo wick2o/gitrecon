@@ -6,8 +6,11 @@
 # pylint: disable-msg=W0612
 # pylint: disable-msg=W0702
 # pylint: disable-msg=W0703
-#!/usr/bin/env python2
-# -*- coding: utf-8 -*-
+# pylint: disable-msg=W0621
+# pylint: disable-msg=R0913
+"""
+Massive GitHub repo clonning
+"""
 
 import os
 import sys
@@ -35,8 +38,6 @@ logger = logging.getLogger(logname)
 # __formatter = logging.Formatter(LOG_FORMAT)
 # __streamhandler = logging.StreamHandler()
 # __streamhandler.setFormatter(__formatter)
-# __streamhandler = logging.StreamHandler()
-# __streamhandler.setFormatter(__formatter)
 # logger.addHandler(__streamhandler)
 
 downloaded_repos = 0
@@ -44,30 +45,13 @@ args = None
 halt = False
 
 try:
-    import argparse
-except ImportError as e:
-    logger.error('Missing needed module: easy_install argparse')
-    halt = True
-
-try:
     import git
-except ImportError as e:
-    logger.error('Missing needed module: easy_install gitpython')
-    halt = True
-
-try:
+    import sqlite3
+    import argparse
     import simplejson as json
 except ImportError as e:
-    logger.error('Missing needed module: easy_install simplejson')
-    halt = True
-
-try:
-    import sqlite3
-except ImportError as e:
-    logger.error('Missing needed module: easy_install sqlite3')
-    halt = True
-
-if halt:
+    logger.exception('Missing mandatory module(s): {0}'.format(e.message))
+    logger.exception('Use pip install -r requirements.txt')
     sys.exit(1)
 
 
@@ -87,9 +71,10 @@ def logo():
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('-u', '--username', action='store', dest='username', required=True, help='Github Username')
-    parser.add_argument('-t', '--threads', action='store', dest='threads', default=0, type=int, help='Number of threads')
-    parser.add_argument('-d', '--debug', action='store_true', dest='debug', help='Show debug messages')
+    parser.add_argument('-d', '--debug',    action='store_true', dest='debug', default=False, help='Show debug messages')
+    parser.add_argument('-r', '--repos',    action='store', dest='repos', default=None, type=str, help='Repo list (comma separated)')
+    parser.add_argument('-t', '--threads',  action='store', dest='threads', default=0, type=int, help='Number of threads')
+    parser.add_argument('-u', '--username', action='store', dest='username', required=True, help='Github username')
     global args
     args = parser.parse_args()
 
@@ -98,8 +83,9 @@ def get_repo_data(user):
     url = 'https://api.github.com/users/%s/repos' % user
     req = urllib2.Request(url)
     user_agent = 'Mozilla/5.0 (Windows NT 6.3; WOW64; rv:16.0.1) Gecko/20121011 Firefox/16.0.1'
-    logger.debug('Using User-Agent %s' % user_agent)
-    req.add_header('User-Agent',user_agent)
+    if args.debug is True:
+        logger.debug('Using User-Agent %s' % user_agent)
+    req.add_header('User-Agent', user_agent)
     page = urllib2.urlopen(req)
     page_content = page.read()
     page.close()
@@ -114,8 +100,8 @@ def dl_worker(repo):
         downloaded_repos = downloaded_repos + 1
         logger.info('Completed %s' % repo['name'])
         del dlw_res
-    except Exception as err:
-        logger.error('There was a problem cloning %s %s' % (repo['name'], err.message))
+    except Exception as e:
+        logger.exception('There was a problem cloning %s %s' % (repo['name'], e.message))
 
 
 def main():
@@ -123,18 +109,41 @@ def main():
     global args
     logo()
     parse_args()
-    repos, rate_limit = get_repo_data(args.username)
-    repos_json = json.loads(repos)
 
-    logfile_path = os.path.join(os.getcwd(),args.username,logfile)
+    logfile_path = os.path.join(os.getcwd(), args.username, logfile)
     logfile_dir = os.path.dirname(logfile_path)
-    if not os.path.exists(logfile_dir): os.mkdir(logfile_dir)
+    if not os.path.exists(logfile_dir):
+        os.mkdir(logfile_dir)
 
     __filehandler = logging.FileHandler(os.path.realpath(logfile_path))
     logger.addHandler(__filehandler)
 
+    if args.debug is True:
+        logger.setLevel(logging.DEBUG)
+
     logger.info('Using username "{0}"'.format(args.username))
     logger.info('Downloading repos from http://www.github.com/{0}'.format(args.username))
+
+    repodata, rate_limit = get_repo_data(args.username)
+
+    if args.repos is None:
+        repos_json = json.loads(repodata)
+    else:
+        repos_json = ''
+        tmp_list = []
+        for r in args.repos.split(","):
+            tmp_str = {
+                "clone_url": "https://github.com/{0}/{1}.git".format(args.username, r),
+                "full_name": os.path.realpath("{0}/{1}".format(args.username, r)),
+                "name": "{0}".format(r)}
+            tmp_list.append(tmp_str)
+            if args.debug is True:
+                logger.debug("Adding repo: {0}".format(tmp_str))
+        repos_json_dumps = json.dumps(tmp_list)
+        repos_json = json.loads(repos_json_dumps)
+
+    if args.debug is True and repos_json is not None:
+        logger.debug('JSON response: {0}'.format(repos_json))
 
     if args.threads > 1:
         q = Queue.Queue()
@@ -163,7 +172,7 @@ def main():
 
     logger.info('Generating wordlists')
 
-    if args.debug:
+    if args.debug is True:
         logger.debug('Creating a database in memory')
 
     db = sqlite3.connect(':memory:')
@@ -173,7 +182,7 @@ def main():
     cur.execute('CREATE TABLE dirs (id INTEGER PRIMARY KEY, name \
                 varchar(255) UNIQUE, count int DEFAULT 1)')
 
-    if args.debug:
+    if args.debug is True:
         logger.debug('Populating the database')
 
     for root, dirs, files in os.walk('./%s' % args.username):
@@ -192,45 +201,45 @@ def main():
                 cur.execute('UPDATE dirs SET count = count + 1 \
                            WHERE name = ?' % (os.path.join(root, m_dir)))
 
-    if args.debug:
+    if args.debug is True:
         logger.debug('Generating the files wordlist')
 
     try:
         cur.execute('SELECT name FROM files ORDER BY count DESC')
         res = cur.fetchall()
     except sqlite3.OperationalError as e:
-        logger.error('Error getting file list from database')
+        logger.exception('Error getting file list from database: {0}'.format(e))
 
-    filename = '%s/%s-files.txt' % (args.username,args.username)
+    filename = '%s/%s-files.txt' % (args.username, args.username)
     logger.info('Writing %s' % filename)
     try:
         fp = open(filename, 'w')
         for itm in res:
             encoded_itm = itm[0].encode('utf8')
-            if isinstance(itm[0],basestring):
+            if isinstance(itm[0], basestring):
                 encoded_itm = itm[0].encode('utf8')
             else:
                 encoded_itm = unicode(itm[0]).encode('utf8')
             fp.write('%s\n' % (encoded_itm))
         fp.close()
-    except (OSError, IOError):
-        logger.error('Cannot write to %s' % filename)
+    except (OSError, IOError) as e:
+        logger.exception('Cannot write to "{0}": {1}'.format(filename, e.message))
 
-    if args.debug:
+    if args.debug is True:
         logger.debug('Generating the dirs wordlist')
 
     cur.execute('SELECT name FROM dirs ORDER BY count DESC')
     res = cur.fetchall()
 
-    filename = '%s/%s-dirs.txt' % (args.username,args.username)
+    filename = '%s/%s-dirs.txt' % (args.username, args.username)
     logger.info('Writing %s' % filename)
     try:
         fp = open(filename, 'w')
         for itm in res:
             fp.write('%s\n' % (itm[0]))
         fp.close()
-    except (OSError, IOError):
-        logger.error('Cannot write to %s' % filename)
+    except (OSError, IOError) as e:
+        logger.exception('Cannot write to "{0}": {1}'.format(filename,e.message))
 
     if cur:
         cur.close()
