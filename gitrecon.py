@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # pylint: disable-msg=C0103
 # pylint: disable-msg=C0301
@@ -17,17 +17,14 @@ import sys
 import datetime
 import logging
 import threading
-import Queue
+import queue
 import time
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 
 __author__ = "Jaime Filson <wick2o@gmail.com>, Borja Ruiz <borja@libcrack.so>"
 __email__ = "wick2o@gmail.com, borja@libcrack.so"
 __date__ = "Date: Wed Jan 28 16:35:57 CET 2015"
-__version__ = 0.5
-
-if sys.version[0] == '3':
-    raise Exception('Python3 is not supported')
+__version__ = 0.6
 
 logname = 'gitrecon'
 logfile = '{0}.log'.format(logname)
@@ -56,13 +53,23 @@ except ImportError as e:
 
 
 def logo():
-    print('\033[91m')
+    red1='\033[31m'
+    red2='\033[91m'
+    bold='\033[1m'
+    reset='\033[0m'
+    color1='\033[1m\033[31m'
+    color2='\033[1m\033[30;41m'
+    # print(red1)
+    print(color2)
+    print('')
     print('  __ _(_) |_ _ __ ___  ___ ___  _ __  ')
     print(' / _` | | __| \'__/ _ \/ __/ _ \| \'_ \ ')
     print('| (_| | | |_| | |  __/ (_| (_) | | | |')
     print(' \__, |_|\__|_|  \___|\___\___/|_| |_|')
     print(' |___/                                ')
-    print('\033[0m')
+    print(reset)
+    print('')
+    print('')
     print('Authors:')
     print('    Jaime Filson aka WiK <wick2o@gmail.com>')
     print('    Borja Ruiz <borja@libcrack.so>')
@@ -81,12 +88,12 @@ def parse_args():
 
 def get_repo_data(user):
     url = 'https://api.github.com/users/%s/repos' % user
-    req = urllib2.Request(url)
+    req = urllib.request.Request(url)
     user_agent = 'Mozilla/5.0 (Windows NT 6.3; WOW64; rv:16.0.1) Gecko/20121011 Firefox/16.0.1'
     if args.debug is True:
         logger.debug('Using User-Agent %s' % user_agent)
     req.add_header('User-Agent', user_agent)
-    page = urllib2.urlopen(req)
+    page = urllib.request.urlopen(req)
     page_content = page.read()
     page.close()
     return page_content, page.info()['X-RateLimit-Remaining']
@@ -146,7 +153,7 @@ def main():
         logger.debug('JSON response: {0}'.format(repos_json))
 
     if args.threads > 1:
-        q = Queue.Queue()
+        q = queue.Queue()
         threads = []
         for itm in repos_json:
             q.put(itm)
@@ -189,14 +196,14 @@ def main():
         for m_file in files:
             try:
                 cur.execute('INSERT INTO files (name) VALUES (?)',
-                        (os.path.join(root,m_file),))
+                            (os.path.join(root, m_file),))
             except sqlite3.IntegrityError:
                 cur.execute('UPDATE files SET count = count + 1 WHERE \
-                name = ?', (os.path.join(root,m_file)))
+                name = ?', (os.path.join(root, m_file)))
         for m_dir in dirs:
             try:
                 cur.execute('INSERT INTO dirs (name) VALUES (?)',
-                        (os.path.join(root,m_dir),))
+                            (os.path.join(root, m_dir),))
             except sqlite3.IntegrityError:
                 cur.execute('UPDATE dirs SET count = count + 1 \
                            WHERE name = ?' % (os.path.join(root, m_dir)))
@@ -216,10 +223,10 @@ def main():
         fp = open(filename, 'w')
         for itm in res:
             encoded_itm = itm[0].encode('utf8')
-            if isinstance(itm[0], basestring):
+            if isinstance(itm[0], str):
                 encoded_itm = itm[0].encode('utf8')
             else:
-                encoded_itm = unicode(itm[0]).encode('utf8')
+                encoded_itm = str(itm[0]).encode('utf8')
             fp.write('%s\n' % (encoded_itm))
         fp.close()
     except (OSError, IOError) as e:

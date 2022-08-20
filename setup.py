@@ -34,8 +34,8 @@ NAME = 'gitrecon'
 VERSION = re.search("__version__ = ([^']+)", read('gitrecon.py')).group(1)
 DESCRIPTION = 'Massive GitHub repo clonning.'
 KEYWORDS = 'git clone recon'
-AUTHOR = 'Borja Ruiz'
-AUTHOR_EMAIL = 'devnull@libcrack.so'
+AUTHOR = __author__
+AUTHOR_EMAIL = __email__
 URL = 'https://www.github.com/libcrack/gitrecon'
 LICENSE = read('LICENSE')
 PACKAGES = []
@@ -76,7 +76,7 @@ PARAMS = {
     'license': LICENSE,
     'packages': PACKAGES,
     'package_dir': PACKAGE_DIR,
-    'package_data': PACKAGE_DATA,
+#    'package_data': PACKAGE_DATA,
     'provides': PROVIDES,
     'requires': INSTALL_REQUIRES,
     'install_requires': INSTALL_REQUIRES,
