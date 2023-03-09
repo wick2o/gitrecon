@@ -47,8 +47,8 @@ try:
     import argparse
     import simplejson as json
 except ImportError as e:
-    logger.exception('Missing mandatory module(s): {0}'.format(e.message))
-    logger.exception('Use pip install -r requirements.txt')
+    logger.critical('Missing mandatory module(s): {0}'.format(e))
+    logger.critical('Use pip install -r requirements.txt')
     sys.exit(1)
 
 
@@ -108,7 +108,7 @@ def dl_worker(repo):
         logger.info('Completed %s' % repo['name'])
         del dlw_res
     except Exception as e:
-        logger.exception('There was a problem cloning %s %s' % (repo['name'], e.message))
+        logger.exception('There was a problem cloning %s %s' % (repo['name'], e))
 
 
 def main():
@@ -230,7 +230,7 @@ def main():
             fp.write('%s\n' % (encoded_itm))
         fp.close()
     except (OSError, IOError) as e:
-        logger.exception('Cannot write to "{0}": {1}'.format(filename, e.message))
+        logger.exception('Cannot write to "{0}": {1}'.format(filename, e))
 
     if args.debug is True:
         logger.debug('Generating the dirs wordlist')
@@ -246,7 +246,7 @@ def main():
             fp.write('%s\n' % (itm[0]))
         fp.close()
     except (OSError, IOError) as e:
-        logger.exception('Cannot write to "{0}": {1}'.format(filename,e.message))
+        logger.exception('Cannot write to "{0}": {1}'.format(filename,e))
 
     if cur:
         cur.close()
