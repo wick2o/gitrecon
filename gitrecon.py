@@ -79,6 +79,7 @@ def logo():
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('-d', '--debug',    action='store_true', dest='debug', default=False, help='Show debug messages')
+    parser.add_argument('-m', '--method',   action='store', dest='method', default='https', type=str, help='Access method (git/https)')
     parser.add_argument('-r', '--repos',    action='store', dest='repos', default=None, type=str, help='Repo list (comma separated)')
     parser.add_argument('-t', '--threads',  action='store', dest='threads', default=0, type=int, help='Number of threads')
     parser.add_argument('-u', '--username', action='store', dest='username', required=True, help='Github username')
@@ -139,8 +140,17 @@ def main():
         repos_json = ''
         tmp_list = []
         for r in args.repos.split(","):
+            clone_url = None
+            if args.method == "https":
+                clone_url = "https://github.com/{0}/{1}.git".format(args.username, r)
+            elif args.method == "git":
+                clone_url = "git@github.com:{0}/{1}.git".format(args.username, r)
+            else:
+                logger.fatal("Unknown access method {0}".format(args.method))
+                raise Exception("Unknown access method {0}".format(args.method))
+            logger.info('Clone URL: {0}'.format(clone_url))
             tmp_str = {
-                "clone_url": "https://github.com/{0}/{1}.git".format(args.username, r),
+                "clone_url": clone_url,
                 "full_name": os.path.realpath("{0}/{1}".format(args.username, r)),
                 "name": "{0}".format(r)}
             tmp_list.append(tmp_str)
