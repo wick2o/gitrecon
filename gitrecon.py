@@ -20,6 +20,7 @@ import threading
 import queue
 import time
 import urllib.request, urllib.error, urllib.parse
+import coloredlogs
 
 __author__ = "Jaime Filson <wick2o@gmail.com>, Borja Ruiz <borja@libcrack.so>"
 __email__ = "wick2o@gmail.com, borja@libcrack.so"
@@ -28,10 +29,17 @@ __version__ = 0.6
 
 logname = 'gitrecon'
 logfile = '{0}.log'.format(logname)
-logging.basicConfig(level=(logging.INFO))
+
 logger = logging.getLogger(logname)
+#logger = logging.getLogger(__name__)
+
+#logging.basicConfig(level=(logging.INFO))
+#coloredlogs.install(level='DEBUG')                 # logs program & libs
+#coloredlogs.install(level='DEBUG', logger=logger)  # logs program only
+coloredlogs.install(level=logging.DEBUG, logger=logger)
 
 # LOG_FORMAT = '%(asctime)s [%(levelname)s] %(module)s.%(funcName)s : %(message)s'
+
 # __formatter = logging.Formatter(LOG_FORMAT)
 # __streamhandler = logging.StreamHandler()
 # __streamhandler.setFormatter(__formatter)
@@ -78,11 +86,18 @@ def logo():
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('-d', '--debug',    action='store_true', dest='debug', default=False, help='Show debug messages')
-    parser.add_argument('-m', '--method',   action='store', dest='method', default='https', type=str, help='Access method (git/https)')
-    parser.add_argument('-r', '--repos',    action='store', dest='repos', default=None, type=str, help='Repo list (comma separated)')
-    parser.add_argument('-t', '--threads',  action='store', dest='threads', default=0, type=int, help='Number of threads')
-    parser.add_argument('-u', '--username', action='store', dest='username', required=True, help='Github username')
+
+    parser.add_argument('-d', '--debug', action='store_true',
+                        dest='debug', default=False, help='Show debug messages')
+    parser.add_argument('-m', '--method', action='store', dest='method',
+                        default='https', type=str, help='Access method (git/https)')
+    parser.add_argument('-r', '--repos', action='store', dest='repos',
+                        default=None, type=str, help='Repo list (comma separated)')
+    parser.add_argument('-t', '--threads', action='store', dest='threads',
+                        default=0, type=int, help='Number of threads')
+    parser.add_argument('-u', '--username', action='store', dest='username',
+                        required=True, help='Github username')
+
     global args
     args = parser.parse_args()
 
