@@ -20,6 +20,7 @@ import threading
 import queue
 import time
 import urllib.request, urllib.error, urllib.parse
+import coloredlogs
 
 __author__ = "Jaime Filson <wick2o@gmail.com>, Borja Ruiz <borja@libcrack.so>"
 __email__ = "wick2o@gmail.com, borja@libcrack.so"
@@ -28,10 +29,17 @@ __version__ = 0.6
 
 logname = 'gitrecon'
 logfile = '{0}.log'.format(logname)
-logging.basicConfig(level=(logging.INFO))
+
 logger = logging.getLogger(logname)
+#logger = logging.getLogger(__name__)
+
+#logging.basicConfig(level=(logging.INFO))
+#coloredlogs.install(level='DEBUG')                 # logs program & libs
+#coloredlogs.install(level='DEBUG', logger=logger)  # logs program only
+coloredlogs.install(level=logging.DEBUG, logger=logger)
 
 # LOG_FORMAT = '%(asctime)s [%(levelname)s] %(module)s.%(funcName)s : %(message)s'
+
 # __formatter = logging.Formatter(LOG_FORMAT)
 # __streamhandler = logging.StreamHandler()
 # __streamhandler.setFormatter(__formatter)
@@ -47,8 +55,8 @@ try:
     import argparse
     import simplejson as json
 except ImportError as e:
-    logger.exception('Missing mandatory module(s): {0}'.format(e.message))
-    logger.exception('Use pip install -r requirements.txt')
+    logger.critical('Missing mandatory module(s): {0}'.format(e))
+    logger.critical('Use pip install -r requirements.txt')
     sys.exit(1)
 
 
@@ -78,10 +86,18 @@ def logo():
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('-d', '--debug',    action='store_true', dest='debug', default=False, help='Show debug messages')
-    parser.add_argument('-r', '--repos',    action='store', dest='repos', default=None, type=str, help='Repo list (comma separated)')
-    parser.add_argument('-t', '--threads',  action='store', dest='threads', default=0, type=int, help='Number of threads')
-    parser.add_argument('-u', '--username', action='store', dest='username', required=True, help='Github username')
+
+    parser.add_argument('-d', '--debug', action='store_true',
+                        dest='debug', default=False, help='Show debug messages')
+    parser.add_argument('-m', '--method', action='store', dest='method',
+                        default='https', type=str, help='Access method (git/https)')
+    parser.add_argument('-r', '--repos', action='store', dest='repos',
+                        default=None, type=str, help='Repo list (comma separated)')
+    parser.add_argument('-t', '--threads', action='store', dest='threads',
+                        default=0, type=int, help='Number of threads')
+    parser.add_argument('-u', '--username', action='store', dest='username',
+                        required=True, help='Github username')
+
     global args
     args = parser.parse_args()
 
@@ -108,7 +124,7 @@ def dl_worker(repo):
         logger.info('Completed %s' % repo['name'])
         del dlw_res
     except Exception as e:
-        logger.exception('There was a problem cloning %s %s' % (repo['name'], e.message))
+        logger.exception('There was a problem cloning %s %s' % (repo['name'], e))
 
 
 def main():
@@ -139,8 +155,17 @@ def main():
         repos_json = ''
         tmp_list = []
         for r in args.repos.split(","):
+            clone_url = None
+            if args.method == "https":
+                clone_url = "https://github.com/{0}/{1}.git".format(args.username, r)
+            elif args.method == "git":
+                clone_url = "git@github.com:{0}/{1}.git".format(args.username, r)
+            else:
+                logger.fatal("Unknown access method {0}".format(args.method))
+                raise Exception("Unknown access method {0}".format(args.method))
+            logger.info('Clone URL: {0}'.format(clone_url))
             tmp_str = {
-                "clone_url": "https://github.com/{0}/{1}.git".format(args.username, r),
+                "clone_url": clone_url,
                 "full_name": os.path.realpath("{0}/{1}".format(args.username, r)),
                 "name": "{0}".format(r)}
             tmp_list.append(tmp_str)
@@ -230,7 +255,7 @@ def main():
             fp.write('%s\n' % (encoded_itm))
         fp.close()
     except (OSError, IOError) as e:
-        logger.exception('Cannot write to "{0}": {1}'.format(filename, e.message))
+        logger.exception('Cannot write to "{0}": {1}'.format(filename, e))
 
     if args.debug is True:
         logger.debug('Generating the dirs wordlist')
@@ -246,7 +271,7 @@ def main():
             fp.write('%s\n' % (itm[0]))
         fp.close()
     except (OSError, IOError) as e:
-        logger.exception('Cannot write to "{0}": {1}'.format(filename,e.message))
+        logger.exception('Cannot write to "{0}": {1}'.format(filename,e))
 
     if cur:
         cur.close()

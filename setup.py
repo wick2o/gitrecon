@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
 # vim:ts=4 sts=4 tw=100:
 # pylint: disable-msg=C0103
